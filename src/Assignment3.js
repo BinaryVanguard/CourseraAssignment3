@@ -157,6 +157,48 @@ function buildCylinder(origin, radius, height, latitude, longitude, color) {
     return cylinder;
 }
 
+function buildTetrahedron() {
+    var tetrahedron = {};
+
+    tetrahedron.points = [];
+
+    tetrahedron.points.push([-.5, 0, 0, 1]);
+    tetrahedron.points.push([.5, 0, 0, 1]);
+    tetrahedron.points.push([0, 1, 0, 1]);
+
+    tetrahedron.points.push([.5, 0, 0, 1]);
+    tetrahedron.points.push([0, 0, -1, 1]);
+    tetrahedron.points.push([0, 1, 0, 1]);
+
+    tetrahedron.points.push([0, 0, -1, 1]);
+    tetrahedron.points.push([-.5, 0, 0, 1]);
+    tetrahedron.points.push([0, 1, 0, 1]);
+
+    tetrahedron.points.push([0, 0, -1, 1]);
+    tetrahedron.points.push([-.5, 0, 0, 1]);
+    tetrahedron.points.push([.5, 0, 0, 1]);
+
+    tetrahedron.colors = [];
+
+    tetrahedron.colors.push([0, 1, 0, 1.0]);
+    tetrahedron.colors.push([0, 1, 0, 1.0]);
+    tetrahedron.colors.push([0, 1, 0, 1.0]);
+
+    tetrahedron.colors.push([1, 0, 0, 1.0]);
+    tetrahedron.colors.push([1, 0, 0, 1.0]);
+    tetrahedron.colors.push([1, 0, 0, 1.0]);
+
+    tetrahedron.colors.push([0, 0, 1, 1.0]);
+    tetrahedron.colors.push([0, 0, 1, 1.0]);
+    tetrahedron.colors.push([0, 0, 1, 1.0]);
+
+    tetrahedron.colors.push([0, 0, 0, 1.0]);
+    tetrahedron.colors.push([0, 0, 0, 1.0]);
+    tetrahedron.colors.push([0, 0, 0, 1.0]);
+
+    return tetrahedron;
+}
+
 
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
@@ -210,38 +252,6 @@ window.onload = function init() {
     mPersp = ortho(-10, 10, -10, 10, -1000, 1000);
     //mPersp = perspective(65, 1, 1, 1000);
 
-    //points.push([-.5, 0, 0, 1]);
-    //points.push([.5, 0, 0, 1]);
-    //points.push([0, 1, 0, 1]);
-    
-    //points.push([.5, 0, 0, 1]);
-    //points.push([0, 0, -1, 1]);
-    //points.push([0, 1, 0, 1]);
-
-    //points.push([0, 0, -1, 1]);
-    //points.push([-.5, 0, 0, 1]);
-    //points.push([0, 1, 0, 1]);
-    
-    //points.push([0, 0, -1, 1]);
-    //points.push([-.5, 0, 0, 1]);
-    //points.push([.5, 0, 0, 1]);
-    
-    //colors.push([0, 1, 0, 1.0]);
-    //colors.push([0, 1, 0, 1.0]);
-    //colors.push([0, 1, 0, 1.0]);
-
-    //colors.push([1, 0, 0, 1.0]);
-    //colors.push([1, 0, 0, 1.0]);
-    //colors.push([1, 0, 0, 1.0]);
-
-    //colors.push([0, 0, 1, 1.0]);
-    //colors.push([0, 0, 1, 1.0]);
-    //colors.push([0, 0, 1, 1.0]);
-
-    //colors.push([0, 0, 0, 1.0]);
-    //colors.push([0, 0, 0, 1.0]);
-    //colors.push([0, 0, 0, 1.0]);
-
     //var fan = buildFan(vec4(), 1, 20, [0, 0, 1, 1]);
     //points = fan.points;
     //colors = fan.colors;
@@ -254,6 +264,8 @@ window.onload = function init() {
 
 
     var sphere = buildSphere(vec4(), 1, 20, 20, [0,0,1,1]);
+
+    var tetrahedron = buildTetrahedron();
 
     function draw() {
         var rot = rotate(.5, [0, 1, 0]);
@@ -276,15 +288,35 @@ window.onload = function init() {
         //renderFan(cone.point);
         //renderFan(cone.base);
 
+        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //renderFan(sphere.top);
+        //renderFan(sphere.bottom);
+        //for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
+
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        renderFan(sphere.top);
-        renderFan(sphere.bottom);
-        for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
+        renderTriangles(tetrahedron);
 
         requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
     //render();
+
+    var shape_select = document.getElementById("shape-select");
+    shape_select.addEventListener("change", function (e) {
+        switch (e.target.value) {
+            case "cone":
+                break;
+            case "cylinder":
+                break;
+            case "sphere":
+                break;
+            case "tetrahedron":
+                break;
+            default:
+                alert(e.target.value);
+                break;
+        }
+    });
 
     var y_slider = document.getElementById("y-rotation");
     y_slider.addEventListener("change", function (e) {
@@ -374,8 +406,7 @@ function renderFan(fan)
     }
 }
 
-
-function render()
+function renderTriangles(triangles)
 {
     var mCamera = lookAt(cam.pos, cam.look, cam.up);
     //mCamera = mult(translate(0,0,-.5), mCamera);
@@ -391,12 +422,12 @@ function render()
     //mCamera = mult(mCamera, transpose(mPersp));
    
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferId);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(points));
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(triangles.points));
 
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBufferId);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(colors));
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(triangles.colors));
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     if (bFillPolygon) {
         gl.useProgram(program);
@@ -404,8 +435,8 @@ function render()
         var u_mMVP = gl.getUniformLocation(program, "mMVP");
         gl.uniformMatrix4fv(u_mMVP, false, flatten(mCamera));
 
-        //gl.drawArrays(gl.TRIANGLES, 0, points.length);
-        gl.drawArrays(gl.TRIANGLE_FAN, 0, points.length);
+        gl.drawArrays(gl.TRIANGLES, 0, triangles.points.length);
+        //gl.drawArrays(gl.TRIANGLE_FAN, 0, triangles.points.length);
     }
 
     if (bDrawWireframe) {
@@ -418,6 +449,6 @@ function render()
         gl.uniform4fv(u_fColor, [0, 0, 0, 1]);
 
         //if it's a fan frame then we shouldn't draw the first point
-        gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+        gl.drawArrays(gl.LINE_STRIP, 0, triangles.points.length);
     }
 }
