@@ -48,6 +48,16 @@
         }
     </script>
 
+    <script id="wireframe-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform vec4 fColor;
+
+        void main(){
+            gl_FragColor = fColor;
+        }
+    </script>
+
     <script type="text/javascript" src="./common/webgl-utils.js"></script>
     <script type="text/javascript" src="./common/initShaders.js"></script>
     <script type="text/javascript" src="./common/MV.js"></script>
