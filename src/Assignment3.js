@@ -83,8 +83,54 @@ function buildStrip(first, second, height, sections, color) {
     return { points: points, colors: colors };
 }
 
-function buildSphere(origin, radius, latitude, longitude) {
+function buildSphere(origin, radius, latitude, longitude, color) {
     var sphere = {};
+    sphere.top = buildFan(movePoint(origin, vec3(0, radius * 2)), radius, 0, longitude, color);
+    sphere.bottom = buildFan(origin, radius, 0, longitude, color);
+    sphere.sides = [];
+    if (latitude > 2)
+        for (var i = 0; i < longitude; ++i)
+            sphere.sides.push(buildStrip(sphere.bottom.points[i + 1], sphere.bottom.points[i + 2], radius * 2, latitude - 2, color));
+    
+    var center = vec4(origin);
+    center[1] += radius;
+    
+    for (var i = 0; i < sphere.top.points.length; ++i) {
+        
+        //console.log("Center: " + center.toString());
+        //console.log("Radius: " + radius.toString());
+        //console.log("Point: " + sphere.top.points[i].toString());
+        //console.log("Point - Center: " + subtract(sphere.top.points[i], center));
+        //console.log("Length: " + length(subtract(sphere.top.points[i], center)));
+        //console.log("Ratio: " + (radius / length(subtract(sphere.top.points[i], center))));
+        //console.log("New Point: " + scale(radius / length(subtract(sphere.top.points[i], center)), sphere.top.points[i]));
+
+        var delta = subtract(sphere.top.points[i], center);
+        var ratio = radius / length(delta);
+
+        sphere.top.points[i] = movePoint(scale(ratio, delta), center);
+        //sphere.top.points[i][3] = 1; move point will reset W
+    }
+    
+    for (var i = 0; i < sphere.bottom.points.length; ++i) {
+        var delta = subtract(sphere.bottom.points[i], center);
+        var ratio = radius / length(delta)
+        sphere.bottom.points[i] = movePoint(scale(ratio, delta), center);
+        //sphere.bottom.points[i][3] = 1; move point will reset W
+    }
+    for (var i = 0; i < sphere.sides.length; ++i)
+        for (var j = 0; j < sphere.sides[i].points.length; ++j) {
+            var delta = subtract(sphere.sides[i].points[j], center);
+            var ratio = radius / length(delta);
+            sphere.sides[i].points[j] = movePoint(scale(ratio, delta), center);
+            //sphere.sides[i].points[j] = scale(radius / length(subtract(sphere.sides[i].points[j], center)), sphere.sides[i].points[j]);
+            //sphere.sides[i].points[j][3] = 1; move point will reset W
+        }
+    //console.log(sphere.top.points);
+    //console.log(sphere.bottom.points);
+    //console.log(sphere.sides.points);
+
+    return sphere;
 }
 
 function buildCone(origin, radius, height, latitude, longitude, color) {
@@ -207,7 +253,7 @@ window.onload = function init() {
     var cone = buildCone(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
 
 
-    var sphere = buildSphere();
+    var sphere = buildSphere(vec4(), 1, 20, 20, [0,0,1,1]);
 
     function draw() {
         var rot = rotate(.5, [0, 1, 0]);
@@ -226,9 +272,14 @@ window.onload = function init() {
         //renderFan(cyl.bottom);
         //for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
 
+        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //renderFan(cone.point);
+        //renderFan(cone.base);
+
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        renderFan(cone.point);
-        renderFan(cone.base);
+        renderFan(sphere.top);
+        renderFan(sphere.bottom);
+        for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
 
         requestAnimationFrame(draw);
     }
