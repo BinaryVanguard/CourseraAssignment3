@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Assignment 3</title>
+    
+    <style>
+        body {
+            margin: 4px;
+            padding: 4px;
+        }
+        div.color {
+            display:inline-block;
+            width:16px;
+            height:16px;
+            border:1px solid black;
+        }
+        div.label {
+            display:inline-block;
+            width:2.5em;
+        }
+        #gl-canvas {
+            cursor: default;    /*http://www.javascripter.net/faq/stylesc.htm;*/
+        }
+    </style>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform float fRotation;
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+
+        varying vec4 color;
+
+        vec4 rotate(vec4 v4Init, float theta){
+            float x = 0.0;
+            float y = 0.0;
+            float z = -1.0; //left handed coordinate system
+            float angle = theta * length(v4Init);    //distance(v4Init, vec4(0));
+            float c = cos( radians(angle) );
+            float omc = 1.0 - c;
+            float s = sin( radians(angle) );
+            mat4 matRot = mat4(
+                vec4( x*x*omc + c,   x*y*omc - z*s, x*z*omc + y*s, 0.0 ),
+                vec4( x*y*omc + z*s, y*y*omc + c,   y*z*omc - x*s, 0.0 ),
+                vec4( x*z*omc - y*s, y*z*omc + x*s, z*z*omc + c,   0.0 ),
+                vec4(0, 0, 0, 1)
+            );
+
+            return matRot * v4Init;
+        
+        }
+
+        void main(){
+            gl_Position = vPosition;//rotate(vPosition, fRotation);
+            color = vColor;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        
+        varying vec4 color;
+
+        void main(){
+            //gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+            gl_FragColor = color;
+        }
+    </script>
+
+    <script type="text/javascript" src="./common/webgl-utils.js"></script>
+    <script type="text/javascript" src="./common/initShaders.js"></script>
+    <script type="text/javascript" src="./common/MV.js"></script>
+    <script type="text/javascript" src="./src/Assignment3.js"></script>
+</head>
+<body>
+    <div>
+    <canvas id="gl-canvas" width="1024" height="768" style="border: 2px solid black;">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>     
+</body>
+</html>
