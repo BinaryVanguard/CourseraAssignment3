@@ -17,6 +17,9 @@ var mPersp; //Perspective... just a name.. could actually be ortho
 
 var y_rotation = 0;
 
+var bFillPolygon = true;
+var bDrawWireframe = true;
+
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
     if (!canvas) {
@@ -119,6 +122,16 @@ window.onload = function init() {
     y_slider.addEventListener("change", function (e) {
         y_rotation = parseInt(e.target.value);
     });
+
+    var chkFilled = document.getElementById("chkFilled");
+    chkFilled.addEventListener("change", function (e) {
+        bFillPolygon = e.target.checked;
+    });
+
+    var chkWireframe = document.getElementById("chkWireframe");
+    chkWireframe.addEventListener("change", function (e) {
+        bDrawWireframe = e.target.checked;
+    });
 }
 
 
@@ -148,18 +161,24 @@ function render()
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.useProgram(program);
+    if (bFillPolygon) {
+        gl.useProgram(program);
 
-    var u_mMVP = gl.getUniformLocation(program, "mMVP");
-    gl.uniformMatrix4fv(u_mMVP, false, flatten(mCamera));
+        var u_mMVP = gl.getUniformLocation(program, "mMVP");
+        gl.uniformMatrix4fv(u_mMVP, false, flatten(mCamera));
 
-    gl.drawArrays(gl.TRIANGLES, 0, points.length);
+        gl.drawArrays(gl.TRIANGLES, 0, points.length);
+    }
 
-    gl.useProgram(wireframe_program);
-    var u_mMVP = gl.getUniformLocation(wireframe_program, "mMVP");
-    gl.uniformMatrix4fv(u_mMVP, false, flatten(mCamera));
-    var u_fColor = gl.getUniformLocation(wireframe_program, "fColor");
-    gl.uniform4fv(u_fColor, [0, 0, 0, 1]);
+    if (bDrawWireframe) {
+        gl.useProgram(wireframe_program);
 
-    gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+        var u_mMVP = gl.getUniformLocation(wireframe_program, "mMVP");
+        gl.uniformMatrix4fv(u_mMVP, false, flatten(mCamera));
+
+        var u_fColor = gl.getUniformLocation(wireframe_program, "fColor");
+        gl.uniform4fv(u_fColor, [0, 0, 0, 1]);
+
+        gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+    }
 }
