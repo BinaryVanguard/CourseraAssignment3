@@ -53,14 +53,14 @@ window.onload = function init() {
     gl.enableVertexAttribArray(vColor);
     
     cam = {};
-    cam.pos = [0, 1, 10 ];
+    cam.pos = ([0, 0, 1 ]);
     //cam.pos = [-0, 0, 1000000];      // WHERE THE EYE IS AT IN SPACE, A POINT
     cam.look =  [0, 0, 0];    // THE LOOK AT VECTOR
     cam.up =  [0, 1, 0];      // THE UP VECTOR
 
 
-    mPersp = ortho(-10, 10, -10, 10, -10, 10);
-    mPersp = perspective(65, 1, 1, 1000);
+    mPersp = ortho(-10, 10, -10, 10, -10, 1000);
+    //mPersp = perspective(65, 1, 1, 1000);
 
     points.push([-.5, 0, 0, 1]);
     points.push([.5, 0, 0, 1]);
@@ -95,13 +95,13 @@ window.onload = function init() {
     colors.push([0, 0, 0, 1.0]);
 
     function draw() {
-        var rot = rotate(.5, [0, 1, 0]);
+        //var rot = rotate(.5, [0, 1, 0]);
 
-        var x = dot(rot[0], vec4(cam.pos));
-        var y = dot(rot[1], vec4(cam.pos));
-        var z = dot(rot[2], vec4(cam.pos));
+        //var x = dot(rot[0], vec4(cam.pos));
+        //var y = dot(rot[1], vec4(cam.pos));
+        //var z = dot(rot[2], vec4(cam.pos));
 
-        cam.pos = [x, y, z];
+        //cam.pos = [x, y, z];
         render();
         requestAnimationFrame(draw);
     }
@@ -119,10 +119,17 @@ window.onload = function init() {
 function render()
 {
     var mCamera = lookAt(cam.pos, cam.look, cam.up);
+    //mCamera = mult(translate(0,0,-.5), mCamera);
+
     //var rot = mult(y_rotation == 0 ? mat4() : rotate(y_rotation, [0, 1, 0]), mat4());//rotate(, [1, 0, 0]));
-    //var mCamera = mult(translate(0, 0, -5), rot);
-    mCamera = mult(mPersp,mCamera);
-    mCamera = transpose(mCamera);
+    //var mCamera = mult(rot, transpose(translate(0, 0, 1)));
+
+    //var mCamera = translate(0, 0, y_rotation - 10);
+
+
+
+    mCamera = mult(mPersp, mCamera);
+    //mCamera = transpose(mCamera);
     //mCamera = mult(mCamera, transpose(mPersp));
 
     var u_mMVP = gl.getUniformLocation(program, "mMVP");
