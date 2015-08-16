@@ -70,10 +70,12 @@ function buildTransform() {
 function enableTransformation() {
     var transform_controls = document.getElementById("transform-controls");
     transform_controls.style.backgroundColor = "";
-
+    
     var controls = transform_controls.getElementsByTagName("input");
-    for (var i = 0; i < controls.length; ++i)
+    for (var i = 0; i < controls.length; ++i) {
         controls[i].disabled = false;
+        controls[i].title = "";
+    }
 
     var value = document.getElementById("shape-list").value;
     var object = null;
@@ -103,6 +105,7 @@ function disableTransformation() {
     for (var i = 0; i < controls.length; ++i) {
         controls[i].disabled = true;
         controls[i].value = 0;
+        controls[i].title = "You must select an object first.";
     }
 }
 
