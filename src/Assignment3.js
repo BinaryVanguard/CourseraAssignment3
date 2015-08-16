@@ -25,6 +25,8 @@ var shape_selection = "cone";
 var next_object_id = 1; //treat zero as an invalid id;
 var world_objects = [];
 
+var zoom = 10;
+
 function rotatePoint(p, r) {
     var x = dot(r[0], vec4(p));
     var y = dot(r[1], vec4(p));
@@ -38,6 +40,14 @@ function movePoint(p, t) {
     var y = p[1] + t[1];
     var z = p[2] + t[2];
     return [x, y, z, 1];
+}
+
+function buildTransform() {
+    return {
+        pos: [0, 0, 0],
+        rot: [0, 0, 0],
+        scale: 1    //uniform scaling only!
+    }
 }
 
 
@@ -90,6 +100,8 @@ function buildStrip(first, second, height, sections, color) {
 
 function buildSphere(origin, radius, latitude, longitude, color) {
     var sphere = { id: next_object_id++, type: "sphere" };
+    sphere.transform = buildTransform();
+
     sphere.top = buildFan(movePoint(origin, vec3(0, radius * 2)), radius, 0, longitude, color);
     sphere.bottom = buildFan(origin, radius, 0, longitude, color);
     sphere.sides = [];
@@ -141,6 +153,8 @@ function buildSphere(origin, radius, latitude, longitude, color) {
 function buildCone(origin, radius, height, latitude, longitude, color) {
     //build two fans
     var cone = { id: next_object_id++, type: "cone" };
+    cone.transform = buildTransform();
+
     cone.point = buildFan(origin, radius, height, longitude, color);
     cone.base = buildFan(origin, radius, 0, longitude, color);
 
@@ -152,6 +166,8 @@ function buildCylinder(origin, radius, height, latitude, longitude, color) {
     //build another fan
     //build triangle strips
     var cylinder = { id: next_object_id++, type: "cylinder" };
+    cylinder.transform = buildTransform();
+
     cylinder.top = buildFan(movePoint(origin, [0, height, 0]), radius, 0, longitude, color);
     cylinder.bottom = buildFan(origin, radius, 0, longitude, color);
     cylinder.sides = [];
@@ -164,6 +180,7 @@ function buildCylinder(origin, radius, height, latitude, longitude, color) {
 
 function buildTetrahedron() {
     var tetrahedron = { id: next_object_id++, type: "tetrahedron" };
+    tetrahedron.transform = buildTransform();
 
     tetrahedron.points = [];
 
@@ -311,6 +328,18 @@ function hookupControls() {
             ? perspective(65, 1, 1, 1000)          
             : ortho(-10, 10, -10, 10, -1000, 1000);
     });
+
+    var zoom_slider = document.getElementById("zoom");
+    zoom_slider.addEventListener("change", function (e) {
+        var new_zoom = parseInt(e.target.value);
+        if (new_zoom) {
+            var delta = zoom - new_zoom;
+            var forward = normalize(subtract(cam.look, cam.pos));
+            cam.pos = add(scale(delta, forward), cam.pos);
+            zoom = new_zoom;
+        }
+        
+    });
 }
 
 window.onload = function init() {
@@ -370,34 +399,34 @@ window.onload = function init() {
     var tetrahedron = buildTetrahedron();
 
     function draw() {
-        var rot = rotate(.5, [0, 1, 0]);
+        //var rot = rotate(.5, [0, 1, 0]);
 
-        var x = dot(rot[0], vec4(cam.pos));
-        var y = dot(rot[1], vec4(cam.pos));
-        var z = dot(rot[2], vec4(cam.pos));
+        //var x = dot(rot[0], vec4(cam.pos));
+        //var y = dot(rot[1], vec4(cam.pos));
+        //var z = dot(rot[2], vec4(cam.pos));
 
-        cam.pos = [x, y, z];
+        //cam.pos = [x, y, z];
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         for (var i = 0; i < world_objects.length; ++i) {
             switch (world_objects[i].type) {
                 case "cone":
-                    renderFan(cone.point);
-                    renderFan(cone.base);
+                    renderFan(cone.point, cone.transform);
+                    renderFan(cone.base, cone.transform);
                     break;
                 case "cylinder":
-                    renderFan(cyl.top);
-                    renderFan(cyl.bottom);
-                    for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
+                    renderFan(cyl.top, cyl.transform);
+                    renderFan(cyl.bottom, cyl.transform);
+                    for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i], cyl.transform);
                     break;
                 case "sphere":
-                    renderFan(sphere.top);
-                    renderFan(sphere.bottom);
-                    for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
+                    renderFan(sphere.top, sphere.transform);
+                    renderFan(sphere.bottom, sphere.transform);
+                    for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i], sphere.transform);
                     break;
                 case "tetrahedron":
-                    renderTriangles(tetrahedron);
+                    renderTriangles(tetrahedron, tetrahedron.transform);
                     break;
                 default:
                     console.log("Failed to render object with id: " + world_objects[i].id);
@@ -413,12 +442,26 @@ window.onload = function init() {
     hookupControls();
 }
 
-function renderStrip(strip)
+function renderStrip(strip, transform)
 {
     var mCamera = lookAt(cam.pos, cam.look, cam.up);
     var rot = mult(y_rotation == 0 ? mat4() : rotate(y_rotation, [1, 0, 0]), mat4());
     mCamera = mult(mCamera, rot)
     mCamera = mult(mPersp, mCamera);
+
+    //bake transform
+    var tran = translate(transform.pos[0], transform.pos[1], transform.pos[2]);
+    var rot_x = rotate(transform.rot[0], [1, 0, 0]);
+    var rot_y = rotate(transform.rot[1], [0, 1, 0]);
+    var rot_z = rotate(transform.rot[2], [0, 0, 1]);
+    var scale = scalem(transform.scale, transform.scale, transform.scale);
+
+    var l2w = mult(rot_z, scale);
+    l2w = mult(rot_y, l2w);
+    l2w = mult(rot_x, l2w);
+    l2w = mult(tran, l2w);
+
+    mCamera = mult(mCamera, l2w);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(strip.points));
@@ -449,7 +492,7 @@ function renderStrip(strip)
     }
 }
 
-function renderFan(fan)
+function renderFan(fan, transform)
 {
     var mCamera = lookAt(cam.pos, cam.look, cam.up);
     var rot = mult(y_rotation == 0 ? mat4() : rotate(y_rotation, [1, 0, 0]), mat4());
@@ -485,7 +528,7 @@ function renderFan(fan)
     }
 }
 
-function renderTriangles(triangles)
+function renderTriangles(triangles, transform)
 {
     var mCamera = lookAt(cam.pos, cam.look, cam.up);
     //mCamera = mult(translate(0,0,-.5), mCamera);
