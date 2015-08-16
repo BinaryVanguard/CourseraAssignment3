@@ -22,6 +22,9 @@ var bDrawWireframe = true;
 
 var shape_selection = "cone";
 
+var next_object_id = 1; //treat zero as an invalid id;
+var world_objects = [];
+
 function rotatePoint(p, r) {
     var x = dot(r[0], vec4(p));
     var y = dot(r[1], vec4(p));
@@ -86,7 +89,7 @@ function buildStrip(first, second, height, sections, color) {
 }
 
 function buildSphere(origin, radius, latitude, longitude, color) {
-    var sphere = {};
+    var sphere = { id: next_object_id++, type: "sphere" };
     sphere.top = buildFan(movePoint(origin, vec3(0, radius * 2)), radius, 0, longitude, color);
     sphere.bottom = buildFan(origin, radius, 0, longitude, color);
     sphere.sides = [];
@@ -137,7 +140,7 @@ function buildSphere(origin, radius, latitude, longitude, color) {
 
 function buildCone(origin, radius, height, latitude, longitude, color) {
     //build two fans
-    var cone = {};
+    var cone = { id: next_object_id++, type: "cone" };
     cone.point = buildFan(origin, radius, height, longitude, color);
     cone.base = buildFan(origin, radius, 0, longitude, color);
 
@@ -148,7 +151,7 @@ function buildCylinder(origin, radius, height, latitude, longitude, color) {
     //build a fan
     //build another fan
     //build triangle strips
-    var cylinder = {};
+    var cylinder = { id: next_object_id++, type: "cylinder" };
     cylinder.top = buildFan(movePoint(origin, [0, height, 0]), radius, 0, longitude, color);
     cylinder.bottom = buildFan(origin, radius, 0, longitude, color);
     cylinder.sides = [];
@@ -160,7 +163,7 @@ function buildCylinder(origin, radius, height, latitude, longitude, color) {
 }
 
 function buildTetrahedron() {
-    var tetrahedron = {};
+    var tetrahedron = { id: next_object_id++, type: "tetrahedron" };
 
     tetrahedron.points = [];
 
@@ -220,29 +223,70 @@ function hookupControls() {
         shape_selection = e.target.value;
     });
 
-    let shape_id = 0;
     var shape_add = document.getElementById("shape-add");
     shape_add.addEventListener("click", function (e) {
         var shape_list = document.getElementById("shape-list");
-        var option = document.createElement("option");
-        option.innerHTML = shape_selection;//.replace(/^[A-Z]*/, function (letter, index) { return letter.toUpperCase(); });
-        option.value = shape_id++;
-        option.setAttribute("data-id", shape_id);
-        shape_list.appendChild(option);
+
+        var new_obj;
+        switch(shape_selection) {
+            case "cone":
+                new_obj = buildCone(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
+                break;
+            case "cylinder":
+                new_obj = buildCylinder(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
+                break;
+            case "sphere":
+                new_obj = buildSphere(vec4(), 1, 20, 20, [0, 0, 1, 1]);
+                break;
+            case "tetrahedron":
+                new_obj = buildTetrahedron();
+                break;
+            default:
+                console.log("Failed to add object with type: " + shape_selection);
+                break;
+        }
+        if (new_obj) {
+            var option = document.createElement("option");
+            option.innerHTML = new_obj.type;//.replace(/^[A-Z]*/, function (letter, index) { return letter.toUpperCase(); });
+            option.value = new_obj.id;
+            option.setAttribute("data-id", new_obj.id);
+            shape_list.appendChild(option);
+
+            world_objects.push(new_obj);
+        }
     });
 
     var shape_del = document.getElementById("shape-del");
     shape_del.addEventListener("click", function (e) {
         var shape_list = document.getElementById("shape-list");
-        if (shape_list.value) {
+        var id = shape_list.value;
+
+        if (id) {
             var toDelete;
             for (var i = 0; i < shape_list.children.length; ++i) {
-                if (shape_list.children[i].value == shape_list.value) {
+                if (shape_list.children[i].value == id) {
                     toDelete = shape_list.children[i];
                     break;
                 }
             }
-            if(toDelete) shape_list.removeChild(toDelete);
+            if (toDelete) {
+                shape_list.removeChild(toDelete)
+            } else {
+                console.log("Failed to remove object with id " + id + " from object list.");
+            }
+
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i) {
+                if (world_objects[i].id == id) {
+                    index = i;
+                    break;
+                }                    
+            }
+            if (index >= 0) {
+                world_objects.splice(index, 1);
+            } else {
+                console.log("Failed to remove object with id " + id + " from world object list.");
+            }
         }
     });
 
@@ -336,24 +380,29 @@ window.onload = function init() {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        switch (shape_selection) {
-            case "cone":
-                renderFan(cone.point);
-                renderFan(cone.base);
-                break;
-            case "cylinder":
-                renderFan(cyl.top);
-                renderFan(cyl.bottom);
-                for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
-                break;
-            case "sphere":
-                renderFan(sphere.top);
-                renderFan(sphere.bottom);
-                for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
-                break;
-            case "tetrahedron":
-                renderTriangles(tetrahedron);
-                break;
+        for (var i = 0; i < world_objects.length; ++i) {
+            switch (world_objects[i].type) {
+                case "cone":
+                    renderFan(cone.point);
+                    renderFan(cone.base);
+                    break;
+                case "cylinder":
+                    renderFan(cyl.top);
+                    renderFan(cyl.bottom);
+                    for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
+                    break;
+                case "sphere":
+                    renderFan(sphere.top);
+                    renderFan(sphere.bottom);
+                    for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
+                    break;
+                case "tetrahedron":
+                    renderTriangles(tetrahedron);
+                    break;
+                default:
+                    console.log("Failed to render object with id: " + world_objects[i].id);
+                    break;
+            }
         }
 
         requestAnimationFrame(draw);
