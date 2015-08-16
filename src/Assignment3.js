@@ -74,6 +74,25 @@ function enableTransformation() {
     var controls = transform_controls.getElementsByTagName("input");
     for (var i = 0; i < controls.length; ++i)
         controls[i].disabled = false;
+
+    var value = document.getElementById("shape-list").value;
+    var object = null;
+    if (value) {
+        for (var i = 0; i < world_objects.length; ++i)
+            if (world_objects[i].id == value) {
+                object = world_objects[i];
+                break;
+            }
+    }
+    if(object) {
+        document.getElementById("translate-x").value = object.transform.pos[0];
+        document.getElementById("translate-y").value = object.transform.pos[1];
+        document.getElementById("translate-z").value = object.transform.pos[2];
+        document.getElementById("rotate-x").value = object.transform.rot[0];
+        document.getElementById("rotate-y").value = object.transform.rot[1];
+        document.getElementById("rotate-z").value = object.transform.rot[2];
+        document.getElementById("scale").value = object.transform.scale * 10;
+    }
 }
 
 function disableTransformation() {
@@ -81,8 +100,10 @@ function disableTransformation() {
     transform_controls.style.backgroundColor = "grey";
 
     var controls = transform_controls.getElementsByTagName("input");
-    for (var i = 0; i < controls.length; ++i)
+    for (var i = 0; i < controls.length; ++i) {
         controls[i].disabled = true;
+        controls[i].value = 0;
+    }
 }
 
 
@@ -417,6 +438,96 @@ function hookupControls() {
         }
     });
 
+    var rotate_x = document.getElementById("rotate-x");
+    rotate_x.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.rot[0] = parseInt(e.target.value);
+                console.log("Rotated " + value);
+            }
+            else
+                console.log("Could not find object with id " + value)
+        }
+        else {
+            console.log("value does not exist");
+        }
+    });
+
+    var rotate_y = document.getElementById("rotate-y");
+    rotate_y.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.rot[1] = parseInt(e.target.value);
+                console.log("Rotated " + value);
+            }
+            else {
+                console.log("Could not find object with id " + value)
+            }
+        }
+    });
+
+    var rotate_z = document.getElementById("rotate-z");
+    rotate_z.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.rot[2] = parseInt(e.target.value);
+                console.log("Rotated " + value);
+            }
+            else {
+                console.log("Could not find object with id " + value)
+            }
+        }
+    });
+
+    var scale_slider = document.getElementById("scale");
+    scale_slider.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.scale = parseInt(e.target.value) / 10;
+                console.log("Scaled " + value);
+            }
+            else {
+                console.log("Could not find object with id " + value)
+            }
+        }
+    });
+    
     var y_slider = document.getElementById("y-rotation");
     y_slider.addEventListener("change", function (e) {
         y_rotation = parseInt(e.target.value);
@@ -452,6 +563,7 @@ function hookupControls() {
     });
 
     disableTransformation();
+    scale_slider.value = 10;
 }
 
 window.onload = function init() {
