@@ -69,8 +69,24 @@
             <canvas id="gl-canvas" width="1024" height="768" style="border: 2px solid black;">
                 Oops ... your browser doesn't support the HTML5 canvas element
             </canvas>     
-            <select id="shape-list" style="vertical-align:top;width:300px;" size="10"></select>
-            <button id="shape-del" style="vertical-align:top;" title="delete">&#9003;</button>
+            <div style="display:inline-block;vertical-align:top;width:350px">
+                <select id="shape-list" style="vertical-align:top;width:300px;" size="10"></select>
+                <button id="shape-del" style="vertical-align:top;" title="delete">&#9003;</button>
+                <div id="transform-controls" style="background-color:grey;display:inline-block;">
+                    <div>
+                        <span style="width:1em">X</span>
+                        <input id="translate-x" type="range" min="-10" max="10" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:1em">Y</span>
+                        <input id="translate-y" type="range" min="-10" max="10" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:1em">Z</span>
+                        <input id="translate-z" type="range" min="-10" max="10" value="0" />
+                    </div>
+                </div>                
+            </div>
         </div>
         <div>
             <select id="shape-select" size="1">

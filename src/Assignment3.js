@@ -43,11 +43,46 @@ function movePoint(p, t) {
 }
 
 function buildTransform() {
+    //function to build the Local to world transformation
+    function l2w() {
+        //bake transform
+        var tran = translate(this.pos[0], this.pos[1], this.pos[2]);
+        var rot_x = rotate(this.rot[0], [1, 0, 0]);
+        var rot_y = rotate(this.rot[1], [0, 1, 0]);
+        var rot_z = rotate(this.rot[2], [0, 0, 1]);
+        var scale = scalem(this.scale, this.scale, this.scale);
+
+        var l2w = mult(rot_z, scale);
+        l2w = mult(rot_y, l2w);
+        l2w = mult(rot_x, l2w);
+        l2w = mult(tran, l2w);
+        
+        return l2w;
+    }
     return {
         pos: [0, 0, 0],
         rot: [0, 0, 0],
-        scale: 1    //uniform scaling only!
+        scale: 1,    //uniform scaling only!
+        buildL2W: l2w
     }
+}
+
+function enableTransformation() {
+    var transform_controls = document.getElementById("transform-controls");
+    transform_controls.style.backgroundColor = "";
+
+    var controls = transform_controls.getElementsByTagName("input");
+    for (var i = 0; i < controls.length; ++i)
+        controls[i].disabled = false;
+}
+
+function disableTransformation() {
+    var transform_controls = document.getElementById("transform-controls");
+    transform_controls.style.backgroundColor = "grey";
+
+    var controls = transform_controls.getElementsByTagName("input");
+    for (var i = 0; i < controls.length; ++i)
+        controls[i].disabled = true;
 }
 
 
@@ -292,6 +327,8 @@ function hookupControls() {
                 console.log("Failed to remove object with id " + id + " from object list.");
             }
 
+            if (shape_list.children.length <= 0) disableTransformation();
+
             var index = -1;
             for (var i = 0; i < world_objects.length; ++i) {
                 if (world_objects[i].id == id) {
@@ -303,6 +340,79 @@ function hookupControls() {
                 world_objects.splice(index, 1);
             } else {
                 console.log("Failed to remove object with id " + id + " from world object list.");
+            }
+        }
+    });
+
+    var shape_list = document.getElementById("shape-list");
+    shape_list.addEventListener("change", function (e) {
+        enableTransformation();
+    });
+
+    var transform_x = document.getElementById("translate-x");
+    transform_x.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.pos[0] = parseInt(e.target.value);
+                console.log("Moved " + value);
+            }
+            else
+                console.log("Could not find object with id " + value)
+        }
+        else {
+            console.log("value does not exist");
+        }
+    });
+
+    var transform_y = document.getElementById("translate-y");
+    transform_y.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.pos[1] = parseInt(e.target.value);
+                console.log("Moved " + value);
+            }
+            else {
+                console.log("Could not find object with id " + value)
+            }
+        }
+    });
+
+    var transform_z = document.getElementById("translate-z");
+    transform_z.addEventListener("change", function (e) {
+        var select = document.getElementById("shape-list");
+        var value = select.value;
+
+        if (value) {
+            var index = -1;
+            for (var i = 0; i < world_objects.length; ++i)
+                if (world_objects[i].id == value) {
+                    index = i;
+                    break;
+                }
+            if (index >= 0) {
+                world_objects[index].transform.pos[2] = parseInt(e.target.value);
+                console.log("Moved " + value);
+            }
+            else {
+                console.log("Could not find object with id " + value)
             }
         }
     });
@@ -340,6 +450,8 @@ function hookupControls() {
         }
         
     });
+
+    disableTransformation();
 }
 
 window.onload = function init() {
@@ -393,10 +505,11 @@ window.onload = function init() {
     mPersp = perspective(65, 1, 1, 1000);
 
     //var fan = buildFan(vec4(), 1, 20, [0, 0, 1, 1]);
-    var cyl = buildCylinder(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
-    var cone = buildCone(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
-    var sphere = buildSphere(vec4(), 1, 20, 20, [0,0,1,1]);
-    var tetrahedron = buildTetrahedron();
+
+    //var cyl = buildCylinder(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
+    //var cone = buildCone(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
+    //var sphere = buildSphere(vec4(), 1, 20, 20, [0,0,1,1]);
+    //var tetrahedron = buildTetrahedron();
 
     function draw() {
         //var rot = rotate(.5, [0, 1, 0]);
@@ -410,23 +523,24 @@ window.onload = function init() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         for (var i = 0; i < world_objects.length; ++i) {
-            switch (world_objects[i].type) {
+            var currObj = world_objects[i];
+            switch (currObj.type) {
                 case "cone":
-                    renderFan(cone.point, cone.transform);
-                    renderFan(cone.base, cone.transform);
+                    renderFan(currObj.point, currObj.transform);
+                    renderFan(currObj.base, currObj.transform);
                     break;
                 case "cylinder":
-                    renderFan(cyl.top, cyl.transform);
-                    renderFan(cyl.bottom, cyl.transform);
-                    for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i], cyl.transform);
+                    renderFan(currObj.top, currObj.transform);
+                    renderFan(currObj.bottom, currObj.transform);
+                    for (var i = 0; i < currObj.sides.length; ++i) renderStrip(currObj.sides[i], currObj.transform);
                     break;
                 case "sphere":
-                    renderFan(sphere.top, sphere.transform);
-                    renderFan(sphere.bottom, sphere.transform);
-                    for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i], sphere.transform);
+                    renderFan(currObj.top, currObj.transform);
+                    renderFan(currObj.bottom, currObj.transform);
+                    for (var i = 0; i < currObj.sides.length; ++i) renderStrip(currObj.sides[i], currObj.transform);
                     break;
                 case "tetrahedron":
-                    renderTriangles(tetrahedron, tetrahedron.transform);
+                    renderTriangles(currObj, currObj.transform);
                     break;
                 default:
                     console.log("Failed to render object with id: " + world_objects[i].id);
@@ -449,19 +563,7 @@ function renderStrip(strip, transform)
     mCamera = mult(mCamera, rot)
     mCamera = mult(mPersp, mCamera);
 
-    //bake transform
-    var tran = translate(transform.pos[0], transform.pos[1], transform.pos[2]);
-    var rot_x = rotate(transform.rot[0], [1, 0, 0]);
-    var rot_y = rotate(transform.rot[1], [0, 1, 0]);
-    var rot_z = rotate(transform.rot[2], [0, 0, 1]);
-    var scale = scalem(transform.scale, transform.scale, transform.scale);
-
-    var l2w = mult(rot_z, scale);
-    l2w = mult(rot_y, l2w);
-    l2w = mult(rot_x, l2w);
-    l2w = mult(tran, l2w);
-
-    mCamera = mult(mCamera, l2w);
+    mCamera = mult(mCamera, transform.buildL2W());
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(strip.points));
@@ -498,6 +600,8 @@ function renderFan(fan, transform)
     var rot = mult(y_rotation == 0 ? mat4() : rotate(y_rotation, [1, 0, 0]), mat4());
     mCamera = mult(mCamera, rot)
     mCamera = mult(mPersp, mCamera);
+
+    mCamera = mult(mCamera, transform.buildL2W());
         
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(fan.points));
@@ -543,6 +647,8 @@ function renderTriangles(triangles, transform)
     //mCamera = transpose(mCamera);
     //mCamera = mult(mCamera, transpose(mPersp));
    
+    mCamera = mult(mCamera, transform.buildL2W());
+
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferId);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(triangles.points));
 
