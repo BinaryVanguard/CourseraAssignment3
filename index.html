@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Assignment 3</title>
+    
+    <style>
+        body {
+            margin: 4px;
+            padding: 4px;
+        }
+        div.color {
+            display:inline-block;
+            width:16px;
+            height:16px;
+            border:1px solid black;
+        }
+        div.label {
+            display:inline-block;
+            width:2.5em;
+        }
+        #gl-canvas {
+            cursor: default;    /*http://www.javascripter.net/faq/stylesc.htm;*/
+        }
+    </style>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform mat4 mMVP;
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+                
+        varying vec4 color;
+
+        void main(){
+            gl_Position = mMVP * vPosition;
+            color = vColor;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        
+        varying vec4 color;
+
+        void main(){
+            //gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+            gl_FragColor = color;
+        }
+    </script>
+
+    <script id="wireframe-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform vec4 fColor;
+
+        void main(){
+            gl_FragColor = fColor;
+        }
+    </script>
+
+    <script type="text/javascript" src="./Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="./Common/initShaders.js"></script>
+    <script type="text/javascript" src="./Common/MV.js"></script>
+    <script type="text/javascript" src="./src/Assignment3.js"></script>
+</head>
+<body>
+    <div>
+        <div>
+            <canvas id="gl-canvas" width="1024" height="768" style="border: 2px solid black;">
+                Oops ... your browser doesn't support the HTML5 canvas element
+            </canvas>     
+            <div style="display:inline-block;vertical-align:top;width:350px">
+                <select id="shape-list" style="vertical-align:top;width:300px;" size="10"></select>
+                <button id="shape-del" style="vertical-align:top;" title="delete">&#9003;</button>
+                <div id="transform-controls" style="background-color:grey;display:inline-block;">
+                    <div>
+                        <span style="width:2em">X</span>
+                        <input id="translate-x" type="range" min="-10" max="10" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:2em">Y</span>
+                        <input id="translate-y" type="range" min="-10" max="10" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:2em">Z</span>
+                        <input id="translate-z" type="range" min="-10" max="10" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:2em">X&#176;</span>
+                        <input id="rotate-x" type="range" min="-180" max="180" value="0" />
+                    </div>
+                    <div>
+                        <span style="width: 2em; ">Y&#176;</span>
+                        <input id="rotate-y" type="range" min="-180" max="180" value="0" />
+                    </div>
+                    <div>
+                        <span style="width: 2em; ">Z&#176;</span>
+                        <input id="rotate-z" type="range" min="-180" max="180" value="0" />
+                    </div>
+                    <div>
+                        <span style="width:2em; ">S</span>
+                        <input id="scale" type="range" min="1" max="100" value="10" step="1" />
+                    </div>
+                </div>    
+            </div>
+        </div>
+        <div>
+            <select id="shape-select" size="1">
+                <option value="cone">Cone</option>
+                <option value="cylinder">Cylinder</option>
+                <option value="sphere">Sphere</option>
+                <option value="tetrahedron">Tetrahedron</option>
+            </select>
+            <button id="shape-add">+</button>
+            Y-Rotation<input id="y-rotation" type="range" min="-360" max="360" value="0" autofocus/>
+            Filled?<input id="chkFilled" type="checkbox" checked />
+            WireFrame?<input id="chkWireframe" type="checkbox" checked />
+            Perspective?<input id="chkPerspective" type="checkbox" checked /> 
+        </div>
+        <div>
+            Zoom<input id="zoom" type="range" min="1" max="100" value="10" />
+        </div>
+    </div>
+</body>
+</html>
