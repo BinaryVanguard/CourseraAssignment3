@@ -702,7 +702,8 @@ function renderStrip(strip, transform)
         gl.uniform4fv(u_fColor, [0, 0, 0, 1]);
 
         //if it's a fan frame then we shouldn't draw the first point
-        gl.drawArrays(gl.LINE_STRIP, 0, strip.points.length);
+        for (var i = 0; i + 2 < strip.points.length; ++i)
+            gl.drawArrays(gl.LINE_LOOP, i, 3);
     }
 }
 
@@ -789,6 +790,7 @@ function renderTriangles(triangles, transform)
         gl.uniform4fv(u_fColor, [0, 0, 0, 1]);
 
         //if it's a fan frame then we shouldn't draw the first point
-        gl.drawArrays(gl.LINE_STRIP, 0, triangles.points.length);
+        for (var i = 0; i < traingles.points.length; i+=3)
+            gl.drawArrays(gl.LINE_LOOP, i, 3);
     }
 }
