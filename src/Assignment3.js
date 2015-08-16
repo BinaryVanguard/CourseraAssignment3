@@ -20,6 +20,8 @@ var y_rotation = 0;
 var bFillPolygon = true;
 var bDrawWireframe = true;
 
+var shape_selection = "cone";
+
 function rotatePoint(p, r) {
     var x = dot(r[0], vec4(p));
     var y = dot(r[1], vec4(p));
@@ -199,6 +201,73 @@ function buildTetrahedron() {
     return tetrahedron;
 }
 
+function hookupControls() {
+    var shape_select = document.getElementById("shape-select");
+    shape_select.addEventListener("change", function (e) {
+        switch (e.target.value) {
+            case "cone":
+                break;
+            case "cylinder":
+                break;
+            case "sphere":
+                break;
+            case "tetrahedron":
+                break;
+            default:
+                alert(e.target.value);
+                break;
+        }
+        shape_selection = e.target.value;
+    });
+
+    let shape_id = 0;
+    var shape_add = document.getElementById("shape-add");
+    shape_add.addEventListener("click", function (e) {
+        var shape_list = document.getElementById("shape-list");
+        var option = document.createElement("option");
+        option.innerHTML = shape_selection;//.replace(/^[A-Z]*/, function (letter, index) { return letter.toUpperCase(); });
+        option.value = shape_id++;
+        option.setAttribute("data-id", shape_id);
+        shape_list.appendChild(option);
+    });
+
+    var shape_del = document.getElementById("shape-del");
+    shape_del.addEventListener("click", function (e) {
+        var shape_list = document.getElementById("shape-list");
+        if (shape_list.value) {
+            var toDelete;
+            for (var i = 0; i < shape_list.children.length; ++i) {
+                if (shape_list.children[i].value == shape_list.value) {
+                    toDelete = shape_list.children[i];
+                    break;
+                }
+            }
+            if(toDelete) shape_list.removeChild(toDelete);
+        }
+    });
+
+    var y_slider = document.getElementById("y-rotation");
+    y_slider.addEventListener("change", function (e) {
+        y_rotation = parseInt(e.target.value);
+    });
+
+    var chkFilled = document.getElementById("chkFilled");
+    chkFilled.addEventListener("change", function (e) {
+        bFillPolygon = e.target.checked;
+    });
+
+    var chkWireframe = document.getElementById("chkWireframe");
+    chkWireframe.addEventListener("change", function (e) {
+        bDrawWireframe = e.target.checked;
+    });
+
+    var chkPerspective = document.getElementById("chkPerspective");
+    chkPerspective.addEventListener("change", function (e) {
+        mPersp = e.target.checked 
+            ? perspective(65, 1, 1, 1000)          
+            : ortho(-10, 10, -10, 10, -1000, 1000);
+    });
+}
 
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
@@ -248,23 +317,12 @@ window.onload = function init() {
     cam.look =  [0, 0, 0];    // THE LOOK AT VECTOR
     cam.up =  [0, 1, 0];      // THE UP VECTOR
 
-
-    mPersp = ortho(-10, 10, -10, 10, -1000, 1000);
-    //mPersp = perspective(65, 1, 1, 1000);
+    mPersp = perspective(65, 1, 1, 1000);
 
     //var fan = buildFan(vec4(), 1, 20, [0, 0, 1, 1]);
-    //points = fan.points;
-    //colors = fan.colors;
-
     var cyl = buildCylinder(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
-    //points = cyl.bottom.points;
-    //colors = cyl.bottom.colors;
-
     var cone = buildCone(vec4(), 1, 5, 1, 20, [0, 0, 1, 1]);
-
-
     var sphere = buildSphere(vec4(), 1, 20, 20, [0,0,1,1]);
-
     var tetrahedron = buildTetrahedron();
 
     function draw() {
@@ -276,62 +334,34 @@ window.onload = function init() {
 
         cam.pos = [x, y, z];
 
-        //render();
-
-
-        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //renderFan(cyl.top);
-        //renderFan(cyl.bottom);
-        //for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
-
-        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //renderFan(cone.point);
-        //renderFan(cone.base);
-
-        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //renderFan(sphere.top);
-        //renderFan(sphere.bottom);
-        //for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
-
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        renderTriangles(tetrahedron);
+
+        switch (shape_selection) {
+            case "cone":
+                renderFan(cone.point);
+                renderFan(cone.base);
+                break;
+            case "cylinder":
+                renderFan(cyl.top);
+                renderFan(cyl.bottom);
+                for (var i = 0; i < cyl.sides.length; ++i) renderStrip(cyl.sides[i]);
+                break;
+            case "sphere":
+                renderFan(sphere.top);
+                renderFan(sphere.bottom);
+                for (var i = 0; i < sphere.sides.length; ++i) renderStrip(sphere.sides[i]);
+                break;
+            case "tetrahedron":
+                renderTriangles(tetrahedron);
+                break;
+        }
 
         requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
     //render();
 
-    var shape_select = document.getElementById("shape-select");
-    shape_select.addEventListener("change", function (e) {
-        switch (e.target.value) {
-            case "cone":
-                break;
-            case "cylinder":
-                break;
-            case "sphere":
-                break;
-            case "tetrahedron":
-                break;
-            default:
-                alert(e.target.value);
-                break;
-        }
-    });
-
-    var y_slider = document.getElementById("y-rotation");
-    y_slider.addEventListener("change", function (e) {
-        y_rotation = parseInt(e.target.value);
-    });
-
-    var chkFilled = document.getElementById("chkFilled");
-    chkFilled.addEventListener("change", function (e) {
-        bFillPolygon = e.target.checked;
-    });
-
-    var chkWireframe = document.getElementById("chkWireframe");
-    chkWireframe.addEventListener("change", function (e) {
-        bDrawWireframe = e.target.checked;
-    });
+    hookupControls();
 }
 
 function renderStrip(strip)

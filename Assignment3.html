@@ -65,9 +65,13 @@
 </head>
 <body>
     <div>
-        <canvas id="gl-canvas" width="1024" height="768" style="border: 2px solid black;">
-            Oops ... your browser doesn't support the HTML5 canvas element
-        </canvas>     
+        <div>
+            <canvas id="gl-canvas" width="1024" height="768" style="border: 2px solid black;">
+                Oops ... your browser doesn't support the HTML5 canvas element
+            </canvas>     
+            <select id="shape-list" style="vertical-align:top;width:300px;" size="10"></select>
+            <button id="shape-del" style="vertical-align:top;" title="delete">&#9003;</button>
+        </div>
         <div>
             <select id="shape-select" size="1">
                 <option value="cone">Cone</option>
@@ -75,9 +79,11 @@
                 <option value="sphere">Sphere</option>
                 <option value="tetrahedron">Tetrahedron</option>
             </select>
+            <button id="shape-add">+</button>
             Y-Rotation<input id="y-rotation" type="range" min="-360" max="360" value="0" autofocus/>
             Filled?<input id="chkFilled" type="checkbox" checked />
             WireFrame?<input id="chkWireframe" type="checkbox" checked />
+            Perspective?<input id="chkPerspective" type="checkbox" checked /> 
         </div>
     </div>
 </body>
